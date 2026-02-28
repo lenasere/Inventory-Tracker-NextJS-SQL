@@ -3,18 +3,23 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev",
+    "dev": "pnpm exec next dev",
+    "dev:web": "pnpm exec next dev",
     "dev:api": "pnpm --filter @restaurant/api dev",
-    "dev:all": "pnpm --parallel --filter . --filter @restaurant/api dev",
+    "dev:all": "pnpm --parallel dev:web dev:api",
     "db:migrate": "pnpm --filter @restaurant/api db:migrate",
     "db:seed": "pnpm --filter @restaurant/api db:seed",
     "db:setup": "pnpm db:migrate && pnpm db:seed",
-    "build": "next build",
-    "start": "next start",
-    "lint": "eslint"
+    "build:web": "pnpm exec next build",
+    "build:api": "pnpm --filter @restaurant/api build",
+    "build:all": "pnpm run build:web && pnpm run build:api",
+    "build": "pnpm run build:web",
+    "start": "pnpm exec next start",
+    "lint": "pnpm exec eslint"
   },
   "dependencies": {
     "next": "16.1.6",
+    "pg": "^8.16.3",
     "react": "19.2.3",
     "react-dom": "19.2.3"
   },

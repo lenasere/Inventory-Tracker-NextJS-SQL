@@ -43,7 +43,7 @@ type ItemForm = {
   notes: string;
 };
 
-const API_BASE = process.env.NEXT_PUBLIC_INVENTORY_API_URL ?? "http://localhost:4000";
+const API_BASE = process.env.NEXT_PUBLIC_INVENTORY_API_URL ?? "";
 
 const units: UnitConfig[] = [
   { key: "foods", label: "Foods" },
@@ -107,7 +107,9 @@ export default function Home() {
         utilities: results[4],
       });
     } catch {
-      setError(`Unable to reach API at ${API_BASE}. Ensure API is running.`);
+      setError(
+        `Unable to reach API at ${API_BASE || "same-origin /api"}. Ensure API and database are configured.`,
+      );
     } finally {
       setLoading(false);
     }
