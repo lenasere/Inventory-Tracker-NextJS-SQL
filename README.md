@@ -3,7 +3,7 @@
 This repository contains a restaurant inventory system built as a pnpm workspace with two main parts:
 
 1. A Next.js dashboard application (`app/`) for inventory visualization and CRUD operations.
-2. A standalone Node.js REST API package (`backend/api`) that uses raw SQL and PostgreSQL (no ORM).
+2. A SQL tooling package (`SQL`) containing migrations/seeds/query SQL (no ORM).
 
 The API is responsible for database access, migrations, seeding, and CRUD endpoints for five inventory storage units:
 
@@ -18,16 +18,16 @@ The API is responsible for database access, migrations, seeding, and CRUD endpoi
 ## 1.1 Monorepo structure
 
 - `app/`: Next.js App Router frontend
-- `backend/api/`: Express + PostgreSQL backend
-- `backend/api/sql/migrations/`: SQL migration files
-- `backend/api/sql/seeds/`: SQL seed files
-- `backend/api/sql/queries/<table>/`: table-scoped SQL CRUD queries
-- `backend/.env`: shared environment configuration for API and DB scripts
+- `SQL/`: SQL tooling package
+- `SQL/sql/migrations/`: SQL migration files
+- `SQL/sql/seeds/`: SQL seed files
+- `SQL/sql/queries/<table>/`: table-scoped SQL CRUD queries
+- `SQL/.env`: shared environment configuration for API and DB scripts
 
 ## 1.2 Technology choices
 
 - Frontend: Next.js 16, React 19, Tailwind CSS 4
-- Backend: Node.js + Express
+- Backend/API: Next.js Route Handlers + PostgreSQL
 - Database: PostgreSQL
 - Querying: raw SQL files loaded at runtime
 - Package manager/workspace: pnpm
@@ -57,7 +57,7 @@ You must have a running PostgreSQL server before running migrations/seeds.
 
 ## 3.1 Shared env file
 
-Create `backend/.env` (or copy from `backend/env.sample`):
+Create `SQL/.env` (or copy from `SQL/env.sample`):
 
 ```env
 DATABASE_URL=postgres://postgres:postgres@localhost:5432/restaurant_inventory
@@ -65,21 +65,18 @@ API_PORT=4000
 CORS_ORIGIN=http://localhost:3000
 ```
 
-## 3.2 Frontend API base URL
+## 3.2 Frontend API base URL (optional)
 
 Create `.env.local` at repository root:
 
 ```env
-NEXT_PUBLIC_INVENTORY_API_URL=http://localhost:4000
+NEXT_PUBLIC_INVENTORY_API_URL=http://localhost:3000
 ```
 
 Notes:
 
 - Frontend reads `NEXT_PUBLIC_INVENTORY_API_URL`.
-- API config loads env files from:
-  1. `backend/.env`
-  2. `backend/api/.env` (optional override)
-  3. current working directory `.env`
+- If not set, frontend defaults to same-origin API (`/api`), which is recommended on Vercel.
 
 ## 4. Installation
 
@@ -120,14 +117,14 @@ pnpm db:seed
 
 What these scripts do:
 
-- `db:migrate`: executes `backend/api/sql/migrate.sql`
-- `db:seed`: executes `backend/api/sql/seed.sql`
+- `db:migrate`: executes `SQL/sql/migrate.sql`
+- `db:seed`: executes `SQL/sql/seed.sql`
 
-The scripts load env values from `backend/.env` and fail fast if `DATABASE_URL` is missing.
+The scripts load env values from `SQL/.env` and fail fast if `DATABASE_URL` is missing.
 
 ## 5.3 Migration order
 
-`backend/api/sql/migrate.sql` runs these files in order:
+`SQL/sql/migrate.sql` runs these files in order:
 
 1. `000_create_audit_trigger.sql`
 2. `001_create_foods.sql`
@@ -138,7 +135,7 @@ The scripts load env values from `backend/.env` and fail fast if `DATABASE_URL` 
 
 ## 5.4 Seed order
 
-`backend/api/sql/seed.sql` runs these files:
+`SQL/sql/seed.sql` runs these files:
 
 1. `seeds/foods.sql`
 2. `seeds/drinks.sql`
@@ -150,38 +147,29 @@ Each seed file uses `ON CONFLICT (item_name) DO UPDATE` for repeatable seeding.
 
 ## 6. Running the Project
 
-## 6.1 Run frontend and API together
-
-```bash
-pnpm dev:all
-```
-
-## 6.2 Run separately
-
-Terminal 1:
-
-```bash
-pnpm dev:api
-```
-
-Terminal 2:
+## 6.1 Run app
 
 ```bash
 pnpm dev
 ```
 
+## 6.2 Initialize DB before first run
+
+```bash
+pnpm db:setup
+```
+
 Default endpoints:
 
 - Frontend: `http://localhost:3000`
-- API: `http://localhost:4000`
+- API: `http://localhost:3000/api`
 
 ## 7. Root Scripts
 
 From root `package.json`:
 
 - `pnpm dev`: run Next.js app
-- `pnpm dev:api`: run API package
-- `pnpm dev:all`: run app + API in parallel
+- `pnpm db:setup`: run DB setup (migrate + seed)
 - `pnpm db:migrate`: run SQL migrations
 - `pnpm db:seed`: run SQL seed scripts
 - `pnpm db:setup`: migrate + seed
@@ -189,15 +177,12 @@ From root `package.json`:
 - `pnpm build`: build Next.js app
 - `pnpm start`: start built Next.js app
 
-## 8. API Package Scripts
+## 8. DB Package Scripts
 
-From `backend/api/package.json`:
+From `SQL/package.json`:
 
-- `pnpm --filter @restaurant/api dev`
-- `pnpm --filter @restaurant/api build`
-- `pnpm --filter @restaurant/api start`
-- `pnpm --filter @restaurant/api db:migrate`
-- `pnpm --filter @restaurant/api db:seed`
+- `pnpm --filter @restaurant/sql db:migrate`
+- `pnpm --filter @restaurant/sql db:seed`
 
 ## 9. Database Schema
 
@@ -219,7 +204,7 @@ Each table has these columns:
 
 CRUD SQL files are separated per table:
 
-`backend/api/sql/queries/<table>/`
+`SQL/sql/queries/<table>/`
 
 - `get_all.sql`
 - `get_by_id.sql`
@@ -239,19 +224,19 @@ This structure keeps SQL explicit, testable, and easy to audit.
 
 ## 11. REST API Contract
 
-Base URL: `http://localhost:4000/api`
+Base URL: `/api` (same origin)
 
 Health endpoint:
 
-- `GET /health`
+- `GET /api/health`
 
 Storage unit endpoints (same pattern for each unit):
 
-- `GET /foods`
-- `GET /foods/:id`
-- `POST /foods`
-- `PUT /foods/:id`
-- `DELETE /foods/:id`
+- `GET /api/foods`
+- `GET /api/foods/:id`
+- `POST /api/foods`
+- `PUT /api/foods/:id`
+- `DELETE /api/foods/:id`
 
 Equivalent endpoints also exist for:
 
@@ -376,7 +361,7 @@ psql -v ON_ERROR_STOP=1 -d "$DATABASE_URL" -f <file>
 If you see connection failures:
 
 - verify PostgreSQL is running
-- verify `DATABASE_URL` in `backend/.env`
+- verify `DATABASE_URL` in `SQL/.env`
 - verify database exists (`restaurant_inventory` by default)
 - test manually:
 
@@ -388,9 +373,9 @@ psql -d "$DATABASE_URL" -c "select now();"
 
 If dashboard shows API error:
 
-- ensure `pnpm dev:api` is running
-- ensure `.env.local` has `NEXT_PUBLIC_INVENTORY_API_URL=http://localhost:4000`
-- ensure CORS origin includes frontend URL (`http://localhost:3000`)
+- ensure `DATABASE_URL` is set (for Next API route handlers)
+- run `pnpm db:setup` at least once
+- if using external API URL, ensure `.env.local` has `NEXT_PUBLIC_INVENTORY_API_URL=...`
 
 ## 14.4 Duplicate item name insert errors
 
@@ -408,8 +393,7 @@ Recommended extension path:
 
 ## 16. Development Conventions
 
-- Keep SQL in dedicated files under `backend/api/sql/queries`.
+- Keep SQL in dedicated files under `SQL/sql/queries`.
 - Keep migrations append-only and ordered numerically.
 - Prefer explicit SQL over hidden abstraction for maintainability.
 - Keep request/response contracts stable and documented.
-

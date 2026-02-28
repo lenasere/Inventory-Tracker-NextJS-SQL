@@ -1,8 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
-import { pool } from "../_lib/db";
+import { getPool } from "../_lib/db";
 import { isUnitKey, parsePayload, unitToTable } from "../_lib/inventory";
 
 export const runtime = "nodejs";
+export const dynamic = "force-dynamic";
 
 export async function GET(
   _request: NextRequest,
@@ -16,6 +17,7 @@ export async function GET(
   const table = unitToTable[unit];
 
   try {
+    const pool = getPool();
     const result = await pool.query(
       `
       SELECT
@@ -69,6 +71,7 @@ export async function POST(
   const table = unitToTable[unit];
 
   try {
+    const pool = getPool();
     const result = await pool.query(
       `
       INSERT INTO ${table} (
