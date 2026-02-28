@@ -1,0 +1,3 @@
+DELETE FROM foods
+WHERE id = $1
+RETURNING id;

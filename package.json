@@ -4,6 +4,11 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
+    "dev:api": "pnpm --filter @restaurant/api dev",
+    "dev:all": "pnpm --parallel --filter . --filter @restaurant/api dev",
+    "db:migrate": "pnpm --filter @restaurant/api db:migrate",
+    "db:seed": "pnpm --filter @restaurant/api db:seed",
+    "db:setup": "pnpm db:migrate && pnpm db:seed",
     "build": "next build",
     "start": "next start",
     "lint": "eslint"

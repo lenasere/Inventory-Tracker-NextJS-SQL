@@ -1,0 +1,20 @@
+CREATE TABLE IF NOT EXISTS cleaning_chemicals (
+  id BIGSERIAL PRIMARY KEY,
+  item_name TEXT NOT NULL,
+  unit TEXT NOT NULL,
+  quantity_in_stock INTEGER NOT NULL DEFAULT 0 CHECK (quantity_in_stock >= 0),
+  reorder_level INTEGER NOT NULL DEFAULT 0 CHECK (reorder_level >= 0),
+  unit_cost NUMERIC(10, 2) NOT NULL DEFAULT 0 CHECK (unit_cost >= 0),
+  notes TEXT,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  UNIQUE (item_name)
+);
+
+CREATE INDEX IF NOT EXISTS idx_cleaning_chemicals_item_name ON cleaning_chemicals(item_name);
+
+DROP TRIGGER IF EXISTS trg_cleaning_chemicals_set_updated_at ON cleaning_chemicals;
+CREATE TRIGGER trg_cleaning_chemicals_set_updated_at
+BEFORE UPDATE ON cleaning_chemicals
+FOR EACH ROW
+EXECUTE FUNCTION set_updated_at();

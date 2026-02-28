@@ -1,0 +1,3 @@
+DELETE FROM clothes
+WHERE id = $1
+RETURNING id;
